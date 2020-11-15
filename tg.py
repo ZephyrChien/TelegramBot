@@ -4,6 +4,7 @@ import time
 import flask
 import utils
 import config
+import random
 import payment
 import telebot
 import threading
@@ -36,8 +37,6 @@ def cmd_sub(message):
 @bot.message_handler(commands=['py'])
 @utils.send_to_me
 def cmd_py(message):
-    uid = config.UID
-    upw = config.UPW
     cmd_args=message.text.split(' ')
     if len(cmd_args) != 3:
         bot.send_message(message.chat.id,'plz follow this format: /py alipay(or wxpay) 5')
@@ -62,28 +61,50 @@ def cmd_py(message):
         bot.send_message(message.chat.id,'too much request \nplz wait ' + str(timer.dict[message.chat.id][0]) + 's')
         return
     
-    bill = payment.Bill(uid,upw)
+    cookie = utils.gen_cookie(config.UID,config.UPW)
+    bill = payment.Bill(cookie)
     bill.initCharge(cmd_args[1],cmd_args[2])
     ok,bill_id,bill_qrcode=bill.charge()
     if not ok:
         bot.send_message(message.chat.id,'error')
         return
-    bot.send_message(message.chat.id,bill_id)
+    bot.send_message(message.chat.id,'invoce: '+ bill_id)
     bot.send_photo(message.chat.id,bill_qrcode)
     bot.send_message(message.chat.id,'plz complete this transaction in 30 minutes')
+    bot.send_message(message.chat.id,'wait for verification..(20s later)\nor do that manually by /py_verify')
     time.sleep(20)
-    for _ in range(0,3):
+
+    for i in range(0,3):
+        bot.send_message(message.chat.id,'verify(%d)..' %(i+1))
         ok = bill.verify(bill_id)
         if ok:
             bot.send_message(message.chat.id,'Finished. Thank you!')
             break
-        time.sleep(5)
+        time.sleep(8)
 
+@bot.message_handler(commands=['py_verify'])
+@utils.send_to_me
+def cmd_py_verify(message):
+    cmd_args = message.text.split(' ')
+    if len(cmd_args) != 2:
+        bot.send_message(message.chat.id,'plz follow this format: /py_verify bill_id')
+        return
+    if len(cmd_args[1]) != 16 or not cmd_args[1].startswith('1C0'):
+        bot.send_message(message.chat.id,'bill_id invalid')
+        return
+    bill = payment.Bill('')
+    ok = bill.verify(cmd_args[1])
+    if ok:
+        bot.send_message(message.chat.id,'Finished. Thank you!')
+    else:
+        bot.send_message(message.chat.id,'Not paid yet')
 
 @bot.message_handler(content_types=['text'])
 @utils.send_to_me
 def common(message):
-    bot.send_message(message.chat.id,'errr..')
+    with open(config.CHAT_FILE,'r') as chat_file:
+        line = chat_file.readlines()[random.randint(0,config.CHAT_FILE_LEN -1)]
+        bot.send_message(message.chat.id,line.rstrip())
 
 #webhook
 @app.route('/', methods=['GET', 'HEAD'])

@@ -2,19 +2,28 @@
 # coding:utf-8
 import time
 import config
+import random
 import telebot
+import datetime
 from functools import wraps
 
 bot = telebot.TeleBot(config.TOKEN)
+
+def gen_cookie(uid, upw):
+        today = datetime.date.today()
+        date = str(today).replace('-','')
+        upv2 = date + '%2C' + str(random.randint(1,10))
+        cookie = 'uid=%s;upw=%s;upv2=%s' %(uid,upw,upv2)
+        return cookie
 
 def send_to_me(func):
     @wraps(func)
     def cmd(message):
         if message.chat.id != config.MASTER:
             if message.chat.username:
-                msg='@' + message.chat.username + '\n' + message.text
+                msg='@%s\n%s' %(message.chat.username,message.text)
             else:
-                msg=message.chat.first_name + ' [' + str(message.chat.id) + ']\n' + message.text
+                msg='%s[%d]\n%s' %(message.chait.first_name,message.chat.id,message.text)
             bot.send_message(config.MASTER,msg)
         return func(message)
     return cmd

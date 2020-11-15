@@ -1,21 +1,15 @@
 #!/usr/bin/env python3
 # coding:utf-8
 import json
-import random
-import datetime
 import requests
 
 class Bill():
-    def __init__(self, uid, upw):
-        today = datetime.date.today()
-        date = str(today).replace('-','')
-        upv2 = date + '%2C' + str(random.randint(1,10))
-        cookie = 'uid=' + uid +';' + 'upw=' + upw + ';' + 'upv2=' + upv2
+    def __init__(self, cookie):
         self.headers = {
             'authority': 'www.xiuluohost.com',
             'accept': 'application/json, text/javascript, */*; q=0.01',
             'x-requested-with': 'XMLHttpRequest',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36',
+            'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36',
             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'origin': 'https://www.xiuluohost.com',
             'sec-fetch-site': 'same-origin',
@@ -46,7 +40,7 @@ class Bill():
             'authority': 'www.xiuluohost.com',
             'cache-control': 'max-age=0',
             'upgrade-insecure-requests': '1',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36',
+            'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36',
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
             'sec-fetch-site': 'none',
             'sec-fetch-mode': 'navigate',
