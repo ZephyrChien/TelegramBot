@@ -9,11 +9,19 @@ from functools import wraps
 
 bot = telebot.TeleBot(config.TOKEN)
 
-def gen_cookie(uid, upw):
+def str_to_num(s):
+    try:
+        n = int(s)
+    except ValueError:
+        return False
+    else:
+        return n
+
+def gen_cookie():
         today = datetime.date.today()
         date = str(today).replace('-','')
         upv2 = date + '%2C' + str(random.randint(1,10))
-        cookie = 'uid=%s;upw=%s;upv2=%s' %(uid,upw,upv2)
+        cookie = 'uid=%s;upw=%s;upv2=%s' %(config.UID,config.UPW,upv2)
         return cookie
 
 def send_to_me(func):
