@@ -16,6 +16,7 @@ bot = telebot.TeleBot(config.TOKEN)
 timer = utils.Timer()
 timer_thread = threading.Thread(target=timer.start,daemon=True)
 timer_thread.start()
+txt_flag = utils.Flag()
 
 #cmd list
 @bot.message_handler(commands=['help'])
@@ -56,7 +57,7 @@ def cmd_nat_edit_outer(message):
         return
     msg = 'current ISP: ' + nat.config.get('isp')
     markup = telebot.types.InlineKeyboardMarkup()
-    call_back_flag = 'ISP' #flag
+    call_back_flag = 'ISP_' #flag
     btn1 = telebot.types.InlineKeyboardButton('CMCC', callback_data=call_back_flag+'CMCC')
     btn2 = telebot.types.InlineKeyboardButton('CTCC', callback_data=call_back_flag+'CTCC')
     btn3 = telebot.types.InlineKeyboardButton('CUCC', callback_data=call_back_flag+'CUCC')
@@ -89,45 +90,13 @@ def cmd_nat_edit_mapper(message):
 @bot.message_handler(commands=['py'])
 @utils.send_to_me
 def cmd_py(message):
-    cmd_args=message.text.split(' ')
-    if len(cmd_args) != 3:
-        bot.send_message(message.chat.id,'plz follow this format: /py alipay(or wxpay) 5')
-        return
-    elif cmd_args[1] not in ['alipay','wxpay']:
-        bot.send_message(message.chat.id,'only support alipay or wxpay')
-        return
-    else:
-        amount = utils.str_to_num(cmd_args[2])
-        if not amount or amount < 0:
-            bot.send_message(message.chat.id,'amount should be an unsigned integer')
-            return
-
-    bot.send_message(message.chat.id,'PYing...')
-    bot.send_message(message.chat.id,'method: '+ cmd_args[1] + '\n' + 'amount: ' + cmd_args[2])
-    
-    if not timer.checkAndReset(message.chat.id,30,1):
-        bot.send_message(message.chat.id,'too much request \nplz wait ' + str(timer.dict[message.chat.id][0]) + 's')
-        return
-    
-    bill = payment.Bill(utils.gen_cookie())
-    bill.initCharge(cmd_args[1],cmd_args[2])
-    ok,bill_id,bill_qrcode=bill.charge()
-    if not ok:
-        bot.send_message(message.chat.id,'error')
-        return
-    bot.send_message(message.chat.id,'invoce: '+ bill_id)
-    bot.send_photo(message.chat.id,bill_qrcode)
-    bot.send_message(message.chat.id,'plz complete this transaction in 30 minutes')
-    bot.send_message(message.chat.id,'wait for verification..(20s later)\nor do that manually by /py_verify')
-    time.sleep(20)
-
-    for i in range(0,3):
-        bot.send_message(message.chat.id,'verify(%d)..' %(i+1))
-        ok = bill.verify(bill_id)
-        if ok:
-            bot.send_message(message.chat.id,'Finished. Thank you!')
-            break
-        time.sleep(8)
+    markup = telebot.types.InlineKeyboardMarkup()
+    call_back_flag = 'PY_' #flag
+    btn1 = telebot.types.InlineKeyboardButton('alipay', callback_data=call_back_flag+'alipay')
+    btn2 = telebot.types.InlineKeyboardButton('wxpay', callback_data=call_back_flag+'wxpay')
+    btn3 = telebot.types.InlineKeyboardButton('cancel', callback_data=call_back_flag+'cancel')
+    markup.add(btn1,btn2,btn3)
+    bot.send_message(message.chat.id,'choose payment method:',reply_markup=markup)
 
 @bot.message_handler(commands=['py_verify'])
 @utils.send_to_me
@@ -149,27 +118,23 @@ def cmd_py_verify(message):
 @bot.message_handler(content_types=['text'])
 @utils.send_to_me
 def common(message):
-    with open(config.CHAT_FILE,'r') as chat_file:
-        line = chat_file.readlines()[random.randint(0,config.CHAT_FILE_LEN -1)]
-        bot.send_message(message.chat.id,line.rstrip())
+    if txt_flag.is_set('py',message.chat.id):
+        utils.txt_py(message,txt_flag,timer)
+    else:
+        with open(config.CHAT_FILE,'r') as chat_file:
+            line = chat_file.readlines()[random.randint(0,config.CHAT_FILE_LEN -1)]
+            bot.send_message(message.chat.id,line.rstrip())
 
 #callback
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
     data = call.data
-    if data.startswith('ISP'):
-        d = data.replace('ISP','')
-        if d == 'Cancel':
-            bot.send_message(call.message.chat.id, 'request canceled')
-            return
-        nat = natctl.Nat(utils.gen_cookie(),config.MIN_PORT,config.MAX_PORT,*config.ALTER_ID,**config.ISPS)
-        if not nat.set_isp(d):
-            bot.send_message(call.message.chat.id, 'error')
-        bot.send_message(call.message.chat.id, 'done!')
+    if data.startswith('ISP_'):
+        utils.callback_isp(call.message,data.replace('ISP_',''))
+    elif data.startswith('PY_'):
+        utils.callback_py(call.message,data.replace('PY_',''),txt_flag)
     
-    bot.answer_callback_query(call.id,'')
-    time.sleep(1)
-    bot.delete_message(call.message.chat.id,call.message.message_id)
+    utils.callback_reply(call)
 
 
 #webhook

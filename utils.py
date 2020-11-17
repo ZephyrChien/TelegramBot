@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 # coding:utf-8
 import time
-import config
 import random
 import telebot
 import datetime
 from functools import wraps
+
+import config
+import natctl
+import payment
 
 bot = telebot.TeleBot(config.TOKEN)
 
@@ -70,3 +73,80 @@ class Timer():
                 return True
             else:
                 return False
+
+class Flag():
+    def __init__(self):
+        self.dict = {
+            'py': {}
+        }
+    
+    def add(self, flag, id, args):
+        self.dict[flag][id] = args
+    
+    def rm(self, flag, id):
+        self.dict[flag].pop(id)
+
+    def is_set(self, flag, id):
+        if self.dict[flag].get(id):
+            return True
+        else:
+            return False
+    def get_val(self, flag, id):
+        return self.dict[flag].get(id)
+
+#callback func
+def callback_reply(call):
+    bot.answer_callback_query(call.id,'')
+    time.sleep(1)
+    bot.delete_message(call.message.chat.id,call.message.message_id)
+
+def callback_isp(message, isp):
+    if isp == 'Cancel':
+        bot.send_message(message.chat.id, 'request canceled')
+        return
+    nat = natctl.Nat(gen_cookie(),config.MIN_PORT,config.MAX_PORT,*config.ALTER_ID,**config.ISPS)
+    if not nat.set_isp(isp):
+        bot.send_message(message.chat.id, 'error')
+    bot.send_message(message.chat.id, 'done!')
+
+def callback_py(message, method, flag):
+    if method == 'cancel':
+        bot.send_message(message.chat.id, 'request canceled')
+        return
+    flag.add('py',message.chat.id,method)
+    bot.send_message(message.chat.id,'method: ' + method)
+    bot.send_message(message.chat.id,'plz enter your top-up amount:')
+
+#text handle func
+def txt_py(message, flag, timer):
+    method = flag.get_val('py',message.chat.id)
+    amount = str_to_num(message.text)
+    if not amount or amount <0:
+        bot.send_message(message.chat.id,'invalid top-up amount, it should be an unsigned integer')
+        bot.send_message(message.chat.id,'plz retry')
+        return
+    bot.send_message(message.chat.id,'PYing...')
+    bot.send_message(message.chat.id,'method: '+ method + '\n' + 'amount: ' + message.text)
+    
+    if not timer.checkAndReset(message.chat.id,30,1):
+        bot.send_message(message.chat.id,'too much request \nplz wait ' + str(timer.dict[message.chat.id][0]) + 's')
+        return
+    flag.rm('py',message.chat.id)
+    bill = payment.Bill(gen_cookie())
+    bill.initCharge(method,amount)
+    ok,bill_id,bill_qrcode=bill.charge()
+    if not ok:
+        bot.send_message(message.chat.id,'error')
+        return
+    bot.send_message(message.chat.id,'invoce: '+ bill_id)
+    bot.send_photo(message.chat.id,bill_qrcode)
+    bot.send_message(message.chat.id,'plz complete this transaction in 30 minutes')
+    bot.send_message(message.chat.id,'wait for verification..(20s later)\nor do that manually by /py_verify')
+    time.sleep(20)
+    for i in range(0,3):
+        bot.send_message(message.chat.id,'verify(%d)..' %(i+1))
+        ok = bill.verify(bill_id)
+        if ok:
+            bot.send_message(message.chat.id,'Finished. Thank you!')
+            break
+        time.sleep(8)
