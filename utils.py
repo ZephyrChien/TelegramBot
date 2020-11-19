@@ -142,12 +142,16 @@ def callback_py(message, method, flag):
         return
     flag.add('py',message.chat.id,method)
     bot.send_message(message.chat.id,'method: ' + method)
-    bot.send_message(message.chat.id,'plz enter your top-up amount:')
+    bot.send_message(message.chat.id,'plz enter your top-up amount, or enter -1 to cancel')
 
 #text handle func
 def txt_py(message, flag, timer):
     method = flag.get_val('py',message.chat.id)
     amount = str_to_num(message.text)
+    if amount == -1:
+        flag.rm('py',message.chat.id)
+        bot.send_message(message.chat.id,'request canceled')
+        return
     if amount <= 0:
         bot.send_message(message.chat.id,'invalid top-up amount, it should be an unsigned integer')
         bot.send_message(message.chat.id,'plz retry')
