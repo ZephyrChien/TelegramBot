@@ -21,26 +21,39 @@ txt_flag = utils.Flag()
 
 #cmd list
 @bot.message_handler(commands=['help'])
-@utils.send_to_me
+@utils.send_to_me(txt_flag)
 def cmd_help(message):
     bot.send_message(message.chat.id,config.USAGE)
+    bot.send_message(message.chat.id,config.TIPS)
 
 @bot.message_handler(commands=['start'])
-@utils.send_to_me
+@utils.send_to_me(txt_flag)
 def cmd_start(message):
     bot.send_message(message.chat.id,'Ciallo')
     bot.send_message(message.chat.id,'with this bot, you can:')
     bot.send_message(message.chat.id,config.USAGE)
+    bot.send_message(message.chat.id,config.TIPS)
+
+@bot.message_handler(commands=['mute'])
+@utils.send_to_me(txt_flag, ignore_mute=True)
+def cmd_mute(message):
+    if not txt_flag.is_set('mute',message.chat.id):
+        txt_flag.add('mute',message.chat.id,1)
+        bot.send_message(message.chat.id,'mute on. nothing would be forwarded except for \'py\'')
+        bot.send_message(message.chat.id,'you could call /mute again to turn it off')
+    else:
+        txt_flag.rm('mute',message.chat.id)
+        bot.send_message(message.chat.id,'mute off. (call /mute to turn it on')
 
 @bot.message_handler(commands=['stat'])
-@utils.send_to_me
+@utils.send_to_me(txt_flag)
 def cmd_stat(message):
     stat_str, update_time = serverstat.get_server_stat(config.SERVER_STAT_API)
     bot.send_message(message.chat.id,stat_str)
     bot.send_message(message.chat.id,'last update: ' + update_time)
 
 @bot.message_handler(commands=['nat'])
-@utils.send_to_me
+@utils.send_to_me(txt_flag)
 def cmd_nat_stat(message):
     nat = natctl.Nat(utils.gen_cookie(),config.MIN_PORT,config.MAX_PORT,*config.ALTER_ID,**config.ISPS)
     if not nat.get_config():
@@ -57,7 +70,7 @@ def cmd_nat_stat(message):
     bot.send_message(message.chat.id,msg)
 
 @bot.message_handler(commands=['nat_edit_outer'])
-@utils.send_to_me
+@utils.send_to_me(txt_flag)
 def cmd_nat_edit_outer(message):
     nat = natctl.Nat(utils.gen_cookie(),config.MIN_PORT,config.MAX_PORT,*config.ALTER_ID,**config.ISPS)
     if not nat.get_config():
@@ -74,7 +87,7 @@ def cmd_nat_edit_outer(message):
     bot.send_message(message.chat.id,msg,reply_markup=markup)
     
 @bot.message_handler(commands=['nat_edit_mapper'])
-@utils.send_to_me
+@utils.send_to_me(txt_flag)
 def cmd_nat_edit_mapper(message):
     cmd_args=message.text.split(' ')
     if len(cmd_args) != 3:
@@ -96,7 +109,7 @@ def cmd_nat_edit_mapper(message):
     
 
 @bot.message_handler(commands=['py'])
-@utils.send_to_me
+@utils.send_to_me(txt_flag, ignore_mute=True)
 def cmd_py(message):
     markup = telebot.types.InlineKeyboardMarkup()
     call_back_flag = 'PY_' #flag
@@ -107,7 +120,7 @@ def cmd_py(message):
     bot.send_message(message.chat.id,'choose payment method:',reply_markup=markup)
 
 @bot.message_handler(commands=['py_verify'])
-@utils.send_to_me
+@utils.send_to_me(txt_flag, ignore_mute=True)
 def cmd_py_verify(message):
     cmd_args = message.text.split(' ')
     if len(cmd_args) != 2:
@@ -124,7 +137,7 @@ def cmd_py_verify(message):
         bot.send_message(message.chat.id,'Not paid yet')
 
 @bot.message_handler(content_types=['text'])
-@utils.send_to_me
+@utils.send_to_me(txt_flag)
 def common(message):
     if txt_flag.is_set('py',message.chat.id):
         utils.txt_py(message,txt_flag,timer)

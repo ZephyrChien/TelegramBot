@@ -54,16 +54,22 @@ def gen_cookie():
         cookie = 'uid=%s;upw=%s;upv2=%s' %(config.UID,config.UPW,upv2)
         return cookie
 
-def send_to_me(func):
-    @wraps(func)
-    def cmd(message):
-        if message.chat.id != config.MASTER:
-            if message.chat.username:
-                msg='@%s\n%s' %(message.chat.username,message.text)
+def send_to_me(flag, ignore_mute=False):
+    def cmd(func):
+        @wraps(func)
+        def send(message):
+            if ignore_mute:
+                is_mute = False
             else:
-                msg='%s[%d]\n%s' %(message.chait.first_name,message.chat.id,message.text)
-            bot.send_message(config.MASTER,msg)
-        return func(message)
+                is_mute = flag.is_set('mute',message.chat.id)
+            if not(message.chat.id == config.MASTER or is_mute):
+                if message.chat.username:
+                    msg='@%s\n%s' %(message.chat.username,message.text)
+                else:
+                    msg='%s[%d]\n%s' %(message.chait.first_name,message.chat.id,message.text)
+                bot.send_message(config.MASTER,msg)
+            return func(message)
+        return send
     return cmd
 
 class Timer():
@@ -104,7 +110,8 @@ class Timer():
 class Flag():
     def __init__(self):
         self.dict = {
-            'py': {}
+            'py': {},
+            'mute': {}
         }
     
     def add(self, flag, id, args):
