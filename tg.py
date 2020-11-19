@@ -8,8 +8,9 @@ import random
 import telebot
 import threading
 
-import payment
 import natctl
+import payment
+import serverstat
 
 app = flask.Flask(__name__)
 bot = telebot.TeleBot(config.TOKEN)
@@ -30,6 +31,13 @@ def cmd_start(message):
     bot.send_message(message.chat.id,'Ciallo')
     bot.send_message(message.chat.id,'with this bot, you can:')
     bot.send_message(message.chat.id,config.USAGE)
+
+@bot.message_handler(commands=['stat'])
+@utils.send_to_me
+def cmd_stat(message):
+    stat_str, update_time = serverstat.get_server_stat(config.SERVER_STAT_API)
+    bot.send_message(message.chat.id,stat_str)
+    bot.send_message(message.chat.id,'last update: ' + update_time)
 
 @bot.message_handler(commands=['nat'])
 @utils.send_to_me
@@ -74,10 +82,10 @@ def cmd_nat_edit_mapper(message):
         return
     src = utils.str_to_num(cmd_args[1])
     dst = utils.str_to_num(cmd_args[2])
-    if (not src) or (src < 0) or (src < config.MIN_PORT) or (src > config.MAX_PORT):
+    if (src <= 0) or (src < config.MIN_PORT) or (src > config.MAX_PORT):
         bot.send_message(message.chat.id,'invalid src')
         return
-    if (not dst) or (dst < 0) or (dst > 65535):
+    if (dst <= 0) or (dst > 65535):
         bot.send_message(message.chat.id,'invalid dst')
         return
 

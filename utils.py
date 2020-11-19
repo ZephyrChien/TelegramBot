@@ -11,6 +11,10 @@ import config
 import natctl
 import payment
 
+GB = 1024**3
+MB = 1024**2
+KB = 1024
+
 bot = telebot.TeleBot(config.TOKEN)
 
 def str_to_num(s):
@@ -33,6 +37,15 @@ def load_json_str(s):
         data = {}
     else:
         return data
+
+def select_max_measure(num):
+    if  num / KB < 1:
+        count = num; measure = 'B'
+    elif num / MB < 1:
+        count = num/KB; measure = 'KB'
+    else:
+        count = round(num/MB,1); measure = 'MB'
+    return count, measure
 
 def gen_cookie():
         today = datetime.date.today()

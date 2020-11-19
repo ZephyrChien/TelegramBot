@@ -26,6 +26,9 @@ ISPS = {}
 MIN_PORT = 10000
 MAX_PORT = 10010
 
+#api
+SERVER_STAT_API = 
+
 #normal_chat
 CHAT_FILE = ''
 CHAT_FILE_LEN = 100
