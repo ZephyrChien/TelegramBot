@@ -20,8 +20,8 @@ def get_server_stat(api_url):
         network_tx, tx_measure = utils.select_max_measure(utils.str_to_num(stat.get('network_tx')))
         network_in = utils.str_to_num(stat.get('network_in')) // utils.GB
         network_out = utils.str_to_num(stat.get('network_out')) // utils.GB
-        memory_total = utils.str_to_num(stat.get('memory_total')) // utils.MB
-        memory_used = utils.str_to_num(stat.get('memory_used')) // utils.MB
+        memory_total = utils.str_to_num(stat.get('memory_total')) // 1024
+        memory_used = utils.str_to_num(stat.get('memory_used')) // 1024
         stat_str = 'mem: %dM / %dM\nnetwork: %.1f%s / %.1f%s\nbandwith: %dG / %dG\n' %(
             memory_used, memory_total,
             network_tx, tx_measure, network_rx, rx_measure,
