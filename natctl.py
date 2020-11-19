@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # coding:utf-8
-import json
+import utils
 import requests
 
 class Nat():
@@ -29,7 +29,7 @@ class Nat():
             'cookie': self.cookie
         }
         r = requests.post(url,headers=headers)
-        resp = json.loads(r.text)
+        resp = utils.load_json_str(r.text)
         if not resp.get('code'):
             return False
         data = resp.get('data')
@@ -60,7 +60,7 @@ class Nat():
             'cookie': self.cookie
         }
         r = requests.post(url, headers=headers, data=payload)
-        resp = json.loads(r.text)
+        resp = utils.load_json_str(r.text)
         if resp.get('code'):
             return True
         return False
@@ -83,7 +83,7 @@ class Nat():
             'cookie': self.cookie
         }
         r = requests.post(url, headers=headers, data=payload)
-        resp = json.loads(r.text)
+        resp = utils.load_json_str(r.text)
         if resp.get('code'):
             return True
         return False

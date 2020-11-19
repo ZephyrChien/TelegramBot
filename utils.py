@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding:utf-8
 import time
+import json
 import random
 import telebot
 import datetime
@@ -16,9 +17,22 @@ def str_to_num(s):
     try:
         n = int(s)
     except ValueError:
-        return False
+        return 0
     else:
         return n
+
+def get_time_str(t):
+    time_arr = datetime.datetime.utcfromtimestamp(t)
+    time_str = time_arr.strftime("%Y-%m-%d %H:%M:%S")
+    return time_str
+
+def load_json_str(s):
+    try:
+        data = json.loads(s)
+    except json.decoder.JSONDecodeError:
+        data = {}
+    else:
+        return data
 
 def gen_cookie():
         today = datetime.date.today()
@@ -121,7 +135,7 @@ def callback_py(message, method, flag):
 def txt_py(message, flag, timer):
     method = flag.get_val('py',message.chat.id)
     amount = str_to_num(message.text)
-    if not amount or amount <0:
+    if amount <= 0:
         bot.send_message(message.chat.id,'invalid top-up amount, it should be an unsigned integer')
         bot.send_message(message.chat.id,'plz retry')
         return

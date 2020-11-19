@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # coding:utf-8
-import json
+import utils
 import requests
 
 class Bill():
@@ -26,8 +26,8 @@ class Bill():
     def charge(self):
         url = "https://www.xiuluohost.com/account/charge"
         r = requests.post(url, headers=self.headers, data=self.payload)
-        resp = json.loads(r.text)
-        if resp['code']:
+        resp = utils.load_json_str(r.text)
+        if resp.get('code'):
             bill_id = resp['data']['bill_id']
             qrcode = "https://www.xiuluohost.com" + resp['data']['qrcode'].replace('\\','')
             return True, bill_id, qrcode
@@ -49,8 +49,8 @@ class Bill():
             'accept-language': 'en-US,en;q=0.9,ja-JP;q=0.8,ja;q=0.7',
         }
         r = requests.get(url,headers=headers)
-        resp = json.loads(r.text)
-        if resp['code']:
+        resp = utils.load_json_str(r.text)
+        if resp.get('code'):
             return True
         else:
             return False
