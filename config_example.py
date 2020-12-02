@@ -7,6 +7,7 @@ PORT = 8080
 PATH = 'telegram/api'
 TOKEN = ''
 MASTER = 0 #chat_id
+ADMIN_GROUP = ['username']
 
 #usage
 cmd_and_usage = {

@@ -9,7 +9,7 @@ from functools import wraps
 
 import config
 import natctl
-import payment
+#import payment
 
 GB = 1024**3
 MB = 1024**2
@@ -66,10 +66,23 @@ def send_to_me(flag, ignore_mute=False):
                 if message.chat.username:
                     msg='@%s\n%s' %(message.chat.username,message.text)
                 else:
-                    msg='%s[%d]\n%s' %(message.chait.first_name,message.chat.id,message.text)
+                    msg='%s[%d]\n%s' %(message.chat.first_name,message.chat.id,message.text)
                 bot.send_message(config.MASTER,msg)
             return func(message)
         return send
+    return cmd
+
+def permit(*group):
+    def cmd(func):
+        @wraps(func)
+        def limit(message):
+            if message.chat.username in group:
+                bot.send_message(message.chat.id,'you are in admin group!')
+                return func(message)
+            else:
+                bot.send_message(message.chat.id,'no permission!')
+                return
+        return limit
     return cmd
 
 class Timer():
@@ -170,6 +183,7 @@ def txt_py(message, flag, timer):
         bot.send_message(message.chat.id,'too much request \nplz wait ' + str(timer.dict[message.chat.id][0]) + 's')
         return
     flag.rm('py',message.chat.id)
+    """
     bill = payment.Bill(gen_cookie())
     bill.initCharge(method,amount)
     ok,bill_id,bill_qrcode=bill.charge()
@@ -188,3 +202,5 @@ def txt_py(message, flag, timer):
             bot.send_message(message.chat.id,'Finished. Thank you!')
             break
         time.sleep(8)
+    """
+    bot.send_message(message.chat.id,'this function was disabled')

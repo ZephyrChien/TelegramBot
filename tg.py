@@ -71,6 +71,7 @@ def cmd_nat_stat(message):
 
 @bot.message_handler(commands=['nat_edit_outer'])
 @utils.send_to_me(txt_flag)
+@utils.permit(*config.ADMIN_GROUP)
 def cmd_nat_edit_outer(message):
     nat = natctl.Nat(utils.gen_cookie(),config.MIN_PORT,config.MAX_PORT,*config.ALTER_ID,**config.ISPS)
     if not nat.get_config():
@@ -88,6 +89,7 @@ def cmd_nat_edit_outer(message):
     
 @bot.message_handler(commands=['nat_edit_mapper'])
 @utils.send_to_me(txt_flag)
+@utils.permit(*config.ADMIN_GROUP)
 def cmd_nat_edit_mapper(message):
     cmd_args=message.text.split(' ')
     if len(cmd_args) != 3:
@@ -129,12 +131,15 @@ def cmd_py_verify(message):
     if len(cmd_args[1]) != 16 or not cmd_args[1].startswith('1C0'):
         bot.send_message(message.chat.id,'bill_id invalid')
         return
+    """
     bill = payment.Bill('')
     ok = bill.verify(cmd_args[1])
     if ok:
         bot.send_message(message.chat.id,'Finished. Thank you!')
     else:
         bot.send_message(message.chat.id,'Not paid yet')
+    """
+    bot.send_message(message.chat.id,'this function was disabled')
 
 @bot.message_handler(content_types=['text'])
 @utils.send_to_me(txt_flag)
